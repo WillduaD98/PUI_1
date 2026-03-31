@@ -9,15 +9,15 @@ function isBcryptHash(value: string): boolean {
 }
 
 export async function puiLogin(req: Request, res: Response) {
-  const { username, clave } = (req.body || {}) as { username?: unknown; clave?: unknown };
+  const { usuario, clave } = (req.body || {}) as { usuario?: unknown; clave?: unknown };
 
-  if (typeof username !== 'string' || typeof clave !== 'string') {
-    return sendError(res, 400, 'username y clave son requeridos');
+  if (typeof usuario !== 'string' || typeof clave !== 'string') {
+    return sendError(res, 400, 'usuario y clave son requeridos');
   }
 
-  const uname = username.trim();
-  if (uname !== env.PUI_USERNAME) {
-    console.info('[PUI] login_failed', { at: new Date().toISOString(), ip: req.ip, username: uname });
+  const uname = usuario.trim();
+  if (uname !== env.PUI_usuario) {
+    console.info('[PUI] login_failed', { at: new Date().toISOString(), ip: req.ip, usuario: uname });
     return sendError(res, 401, 'Credenciales inválidas');
   }
 
@@ -31,14 +31,14 @@ export async function puiLogin(req: Request, res: Response) {
   }
 
   if (!passwordOk) {
-    console.info('[PUI] login_failed', { at: new Date().toISOString(), ip: req.ip, username: uname });
+    console.info('[PUI] login_failed', { at: new Date().toISOString(), ip: req.ip, usuario: uname });
     return sendError(res, 401, 'Credenciales inválidas');
   }
 
   const signOptions: SignOptions = { expiresIn: env.JWT_EXPIRES_IN as any };
   const token = jwt.sign({ sub: uname }, env.JWT_SECRET, signOptions);
 
-  console.info('[PUI] login_success', { at: new Date().toISOString(), ip: req.ip, username: uname });
+  console.info('[PUI] login_success', { at: new Date().toISOString(), ip: req.ip, usuario: uname });
   return sendSuccess(res, 200, {
     token,
     tokenType: 'Bearer',
