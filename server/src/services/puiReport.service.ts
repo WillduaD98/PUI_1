@@ -19,6 +19,7 @@ export type PuiReportRecord = {
 // Almacenamiento temporal en memoria.
 // En producción debe reemplazarse por persistencia real (DB) sin cambiar la interfaz pública del servicio.
 const reports = new Map<string, PuiReportRecord>();
+const reportIds = new Map<string, { curp: string; status: PuiReportStatus; updatedAt: string }>();
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -77,4 +78,20 @@ export function deactivateReport(curp: string, source: string): PuiReportRecord 
   };
   reports.set(curp, updated);
   return updated;
+}
+
+export function activateReportById(id: string, curp: string, source: string): void {
+  const rec = activateReport(curp, source);
+  reportIds.set(id, { curp: rec.curp, status: rec.status, updatedAt: rec.updatedAt });
+}
+
+export function deactivateReportById(id: string, source: string): void {
+  const now = nowIso();
+  const existing = reportIds.get(id);
+  if (!existing) {
+    reportIds.set(id, { curp: '', status: 'inactive', updatedAt: now });
+    return;
+  }
+  if (existing.curp) deactivateReport(existing.curp, source);
+  reportIds.set(id, { ...existing, status: 'inactive', updatedAt: now });
 }
