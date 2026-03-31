@@ -1,0 +1,37 @@
+{
+  "name": "main",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm run build && node server/dist/index.js",
+    "start:local": "concurrently \"npm run server\"",
+    "start:dev": "npm --prefix server run dev",
+    "server": "npm --prefix server run start:build",
+    "server:dev": "npm --prefix server run dev",
+    "install": "cd server && npm i ",
+    "client:build": "cd client && npm run build",
+    "client:preview": "cd client && npm run preview -- --port 5173",
+    "client:dev": "cd client && npm run dev",
+    "client:dev:5173": "cd client && npm run dev -- --port 5173",
+    "build": "npm --prefix server run build",
+    "seed": "cd server && npm run seed",
+    "render-build": "npm run install && npm run build",
+    "dev": "nodemon --watch './**/*.ts' --exec 'ts-node' src/server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node-cron": "^3.0.11",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "nodemon": "^3.1.3",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.13.8",
+    "node-cron": "^4.2.1"
+  }
+}
