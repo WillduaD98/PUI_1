@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
-    "node-cron": "^4.2.1"
+    "node-cron": "^4.2.1",
+    "semgrep": "^0.0.1"
   }
 }
