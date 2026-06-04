@@ -33,6 +33,8 @@ type Env = {
     AUTH_PASSWORD_HASH?: string;
     AUTH_PASSWORD_PLAIN?: string;
     AUTH_PASSWORD_PEPPER?: string;
+    AUDIT_HASH_PEPPER?: string;
+    PUI_COMPANY_DEFAULT_ID?: string;
 }
 
 const base = {
@@ -49,6 +51,8 @@ const authusuario = optEnv('AUTH_usuario');
 const authPasswordHash = optEnv('AUTH_PASSWORD_HASH');
 const authPasswordPlain = optEnv('AUTH_PASSWORD_PLAIN');
 const authPasswordPepper = optEnv('AUTH_PASSWORD_PEPPER');
+const auditHashPepper = optEnv('AUDIT_HASH_PEPPER');
+const puiCompanyDefaultId = optEnv('PUI_COMPANY_DEFAULT_ID');
 
 export const env: Env = {
     ...base,
@@ -56,5 +60,7 @@ export const env: Env = {
     ...(authusuario ? { AUTH_usuario: authusuario } : {}),
     ...(authPasswordHash ? { AUTH_PASSWORD_HASH: authPasswordHash } : {}),
     ...(authPasswordPlain ? { AUTH_PASSWORD_PLAIN: authPasswordPlain } : {}),
-    ...(authPasswordPepper ? { AUTH_PASSWORD_PEPPER: authPasswordPepper } : {})
+    ...(authPasswordPepper ? { AUTH_PASSWORD_PEPPER: authPasswordPepper } : {}),
+    ...(auditHashPepper ? { AUDIT_HASH_PEPPER: auditHashPepper } : {}),
+    ...(puiCompanyDefaultId ? { PUI_COMPANY_DEFAULT_ID: puiCompanyDefaultId } : {})
 };

@@ -56,3 +56,28 @@ packacge-lock.json
 .env.development
 .env.production
 .DS_Store
+
+# Security generated reports
+security-reports/**/*.json
+security-reports/**/*.html
+security-reports/**/*.sarif
+security-reports/**/*.xml
+security-reports/**/*.txt
+
+# Keep folder structure
+!security-reports/**/.gitkeep
+!security-reports/README.md
+security-reports/
+cat >> .gitignore <<'EOF'
+
+# Security generated reports
+security-reports/**/*.json
+security-reports/**/*.html
+security-reports/**/*.sarif
+security-reports/**/*.xml
+security-reports/**/*.txt
+
+# Keep security reports structure/docs
+!security-reports/**/.gitkeep
+!security-reports/README.md
+EOF

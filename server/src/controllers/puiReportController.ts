@@ -1,6 +1,10 @@
 import type { Request, Response } from 'express';
 import { activateReportById, deactivateReportById } from '../services/puiReport.service.js';
-import { isCurpFormat, normalizeCurp } from './puiHelpers.js';
+import { hashCurpForAudit, isCurpFormat, normalizeCurp, resolveCompanyIdFromHostname } from './puiHelpers.js';
+import { PuiSearchIndexModel } from '../models/puiSearchIndex.js';
+import { PuiAuditLogModel } from '../models/puiAuditLog.js';
+import { PuiReportSessionModel } from '../models/puiReportSession.js';
+import { env } from '../config/env.js';
 
 const SOURCE = 'PUI';
 
@@ -10,6 +14,30 @@ const ACTIVAR_REPORTE_INTERNAL_ERROR_MESSAGE = 'Ocurrió un error interno al pro
 const ACTIVAR_REPORTE_PRUEBA_SUCCESS_MESSAGE = 'Petición recibida y procesada de manera correcta.';
 const ACTIVAR_REPORTE_PRUEBA_INTERNAL_ERROR_MESSAGE = 'Ocurrió un error interno al procesar la prueba del Webhook';
 const DESACTIVAR_REPORTE_SUCCESS_MESSAGE = 'Registro de finalización de búsqueda histórica guardado correctamente';
+
+type AuditLogWrite = {
+  requestId: string;
+  companyId: string;
+  endpoint: string;
+  source: 'PUI';
+  method: string;
+  httpStatus: number;
+  matched?: boolean;
+  matchCount?: number;
+  curpHash?: string;
+  durationMs: number;
+  errorMessage?: string;
+};
+
+async function writeAuditLog(doc: AuditLogWrite) {
+  try {
+    await PuiAuditLogModel.updateOne(
+      { requestId: doc.requestId },
+      { $set: doc, $setOnInsert: { requestId: doc.requestId } },
+      { upsert: true }
+    ).exec();
+  } catch {}
+}
 
 function isUuidV4(value: string): boolean {
   return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(value);
@@ -32,7 +60,7 @@ function validateOptionalString(value: unknown, min: number, max: number): boole
   return v.length >= min && v.length <= max;
 }
 
-function validateActivarReporteBody(body: unknown): { ok: true; id: string; curp: string } | { ok: false } {
+export function validateActivarReporteBody(body: unknown): { ok: true; id: string; curp: string } | { ok: false } {
   if (!body || typeof body !== 'object') return { ok: false };
   const b = body as Record<string, unknown>;
 
@@ -95,7 +123,7 @@ function validateActivarReporteBody(body: unknown): { ok: true; id: string; curp
   return { ok: true, id, curp };
 }
 
-function validateDesactivarReporteBody(body: unknown): { ok: true; id: string } | { ok: false } {
+export function validateDesactivarReporteBody(body: unknown): { ok: true; id: string } | { ok: false } {
   if (!body || typeof body !== 'object') return { ok: false };
   const b = body as Record<string, unknown>;
   if (typeof b.id !== 'string') return { ok: false };
@@ -113,12 +141,45 @@ function validateDesactivarReporteBody(body: unknown): { ok: true; id: string } 
 export async function activarReportePrueba(req: Request, res: Response) {
   const validated = validateActivarReporteBody(req.body);
   if (!validated.ok) return res.status(400).json({ message: ACTIVAR_REPORTE_BAD_REQUEST_MESSAGE });
+  const startedAt = Date.now();
+  const requestId = validated.id;
+  const companyId = resolveCompanyIdFromHostname(req.hostname);
   try {
-    console.info('[PUI] activar-reporte-prueba', { at: new Date().toISOString(), ip: req.ip, id: validated.id, curp: validated.curp });
+    const curpHash = hashCurpForAudit(validated.curp);
+    let matchCount = 0;
+    if (env.MONGODB_URI) {
+      matchCount = await PuiSearchIndexModel.countDocuments({ companyId, curp: validated.curp, estatus: 'active' }).exec();
+      await writeAuditLog({
+        requestId,
+        companyId,
+        endpoint: '/activar-reporte-prueba',
+        source: 'PUI',
+        method: 'POST',
+        httpStatus: 200,
+        matched: matchCount > 0,
+        matchCount,
+        curpHash,
+        durationMs: Date.now() - startedAt
+      });
+    }
+    console.info('[PUI] activar-reporte-prueba', { at: new Date().toISOString(), ip: req.ip, id: validated.id, companyId });
     if (res.headersSent) return;
     return res.status(200).json({ message: ACTIVAR_REPORTE_PRUEBA_SUCCESS_MESSAGE });
   } catch (error) {
-    console.error('[PUI] activar-reporte-prueba error', { at: new Date().toISOString(), id: validated.id, error });
+    if (env.MONGODB_URI) {
+      await writeAuditLog({
+        requestId,
+        companyId,
+        endpoint: '/activar-reporte-prueba',
+        source: 'PUI',
+        method: 'POST',
+        httpStatus: 500,
+        curpHash: hashCurpForAudit(validated.curp),
+        durationMs: Date.now() - startedAt,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+    console.error('[PUI] activar-reporte-prueba error', { at: new Date().toISOString(), id: validated.id, companyId, error });
     return res.status(500).json({ message: ACTIVAR_REPORTE_PRUEBA_INTERNAL_ERROR_MESSAGE });
   }
 }
@@ -126,19 +187,56 @@ export async function activarReportePrueba(req: Request, res: Response) {
 export async function activarReporte(req: Request, res: Response) {
   const validated = validateActivarReporteBody(req.body);
   if (!validated.ok) return res.status(400).json({ message: ACTIVAR_REPORTE_BAD_REQUEST_MESSAGE });
+  const startedAt = Date.now();
+  const requestId = validated.id;
+  const companyId = resolveCompanyIdFromHostname(req.hostname);
 
   try {
     activateReportById(validated.id, validated.curp, SOURCE);
+    if (env.MONGODB_URI) {
+      await PuiReportSessionModel.updateOne(
+        { companyId, puiId: validated.id },
+        { $set: { curp: validated.curp, status: 'active', activatedAt: new Date() }, $setOnInsert: { companyId, puiId: validated.id } },
+        { upsert: true }
+      ).exec();
+      const curpHash = hashCurpForAudit(validated.curp);
+      const matchCount = await PuiSearchIndexModel.countDocuments({ companyId, curp: validated.curp, estatus: 'active' }).exec();
+      await writeAuditLog({
+        requestId,
+        companyId,
+        endpoint: '/activar-reporte',
+        source: 'PUI',
+        method: 'POST',
+        httpStatus: 200,
+        matched: matchCount > 0,
+        matchCount,
+        curpHash,
+        durationMs: Date.now() - startedAt
+      });
+    }
     console.info('[PUI] activar-reporte', {
       at: new Date().toISOString(),
       ip: req.ip,
       id: validated.id,
-      curp: validated.curp
+      companyId
     });
     if (res.headersSent) return;
     return res.status(200).json({ message: ACTIVAR_REPORTE_SUCCESS_MESSAGE });
   } catch (error) {
-    console.error('[PUI] activar-reporte error', { at: new Date().toISOString(), id: validated.id, error });
+    if (env.MONGODB_URI) {
+      await writeAuditLog({
+        requestId,
+        companyId,
+        endpoint: '/activar-reporte',
+        source: 'PUI',
+        method: 'POST',
+        httpStatus: 500,
+        curpHash: hashCurpForAudit(validated.curp),
+        durationMs: Date.now() - startedAt,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+    console.error('[PUI] activar-reporte error', { at: new Date().toISOString(), id: validated.id, companyId, error });
     return res.status(500).json({ message: ACTIVAR_REPORTE_INTERNAL_ERROR_MESSAGE });
   }
 }
@@ -146,14 +244,46 @@ export async function activarReporte(req: Request, res: Response) {
 export async function desactivarReporte(req: Request, res: Response) {
   const validated = validateDesactivarReporteBody(req.body);
   if (!validated.ok) return res.status(400).json({ message: ACTIVAR_REPORTE_BAD_REQUEST_MESSAGE });
+  const startedAt = Date.now();
+  const requestId = validated.id;
+  const companyId = resolveCompanyIdFromHostname(req.hostname);
 
   try {
     deactivateReportById(validated.id, SOURCE);
-    console.info('[PUI] desactivar-reporte', { at: new Date().toISOString(), ip: req.ip, id: validated.id });
+    if (env.MONGODB_URI) {
+      const session = await PuiReportSessionModel.findOne({ companyId, puiId: validated.id }).exec();
+      if (session) {
+        session.status = 'inactive';
+        session.deactivatedAt = new Date();
+        await session.save();
+      }
+      await writeAuditLog({
+        requestId,
+        companyId,
+        endpoint: '/desactivar-reporte',
+        source: 'PUI',
+        method: 'POST',
+        httpStatus: 200,
+        durationMs: Date.now() - startedAt
+      });
+    }
+    console.info('[PUI] desactivar-reporte', { at: new Date().toISOString(), ip: req.ip, id: validated.id, companyId });
     if (res.headersSent) return;
     return res.status(200).json({ message: DESACTIVAR_REPORTE_SUCCESS_MESSAGE });
   } catch (error) {
-    console.error('[PUI] desactivar-reporte error', { at: new Date().toISOString(), id: validated.id, error });
+    if (env.MONGODB_URI) {
+      await writeAuditLog({
+        requestId,
+        companyId,
+        endpoint: '/desactivar-reporte',
+        source: 'PUI',
+        method: 'POST',
+        httpStatus: 500,
+        durationMs: Date.now() - startedAt,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+    console.error('[PUI] desactivar-reporte error', { at: new Date().toISOString(), id: validated.id, companyId, error });
     return res.status(500).json({ message: ACTIVAR_REPORTE_INTERNAL_ERROR_MESSAGE });
   }
 }

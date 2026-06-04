@@ -23,3 +23,11 @@ export function getPasswordHash(): string {
   }
     throw new Error('password hash not found');
 }
+
+export async function hashPasswordForStorage(plainPassword: string): Promise<string> {
+  return bcrypt.hash(applyPepper(plainPassword), 12);
+}
+
+export async function verifyPassword(plainPassword: string, passwordHash: string): Promise<boolean> {
+  return bcrypt.compare(applyPepper(plainPassword), passwordHash);
+}
