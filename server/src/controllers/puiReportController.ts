@@ -126,6 +126,8 @@ export function validateActivarReporteBody(body: unknown): { ok: true; id: strin
 export function validateDesactivarReporteBody(body: unknown): { ok: true; id: string } | { ok: false } {
   if (!body || typeof body !== 'object') return { ok: false };
   const b = body as Record<string, unknown>;
+  const keys = Object.keys(b);
+  if (keys.length !== 1 || keys[0] !== 'id') return { ok: false };
   if (typeof b.id !== 'string') return { ok: false };
   const id = b.id.trim();
   if (id.length < 36 || id.length > 75) return { ok: false };
