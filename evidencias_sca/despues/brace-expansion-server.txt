@@ -1,0 +1,5 @@
+pui-service@0.0.1 /Users/willdua/Desktop/PUI/PUI_1/server
+└─┬ nodemon@3.1.14
+  └─┬ minimatch@10.2.5
+    └── brace-expansion@5.0.6
+

@@ -1,0 +1,5 @@
+main@1.0.0 /Users/willdua/Desktop/PUI/PUI_1
+└─┬ nodemon@3.1.14
+  └─┬ minimatch@10.2.5
+    └── brace-expansion@5.0.6
+

@@ -1,0 +1,8 @@
+
+> main@1.0.0 build
+> npm --prefix server run build
+
+
+> pui-service@0.0.1 build
+> npx tsc
+

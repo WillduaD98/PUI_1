@@ -1,0 +1,5 @@
+Severidad  Cantidad
+Critical   0
+High       0
+Moderate   0
+Low        0

@@ -1,0 +1,30 @@
+{
+  "@apollo/client": {
+    "current": "3.14.1",
+    "wanted": "3.14.1",
+    "latest": "4.2.3",
+    "dependent": "PUI_1",
+    "location": "/Users/willdua/Desktop/PUI/PUI_1/node_modules/@apollo/client"
+  },
+  "concurrently": {
+    "current": "8.2.2",
+    "wanted": "8.2.2",
+    "latest": "10.0.3",
+    "dependent": "PUI_1",
+    "location": "/Users/willdua/Desktop/PUI/PUI_1/node_modules/concurrently"
+  },
+  "cross-env": {
+    "current": "7.0.3",
+    "wanted": "7.0.3",
+    "latest": "10.1.0",
+    "dependent": "PUI_1",
+    "location": "/Users/willdua/Desktop/PUI/PUI_1/node_modules/cross-env"
+  },
+  "wait-on": {
+    "current": "7.2.0",
+    "wanted": "7.2.0",
+    "latest": "9.0.10",
+    "dependent": "PUI_1",
+    "location": "/Users/willdua/Desktop/PUI/PUI_1/node_modules/wait-on"
+  }
+}

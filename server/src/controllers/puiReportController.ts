@@ -157,7 +157,7 @@ export async function activarReportePrueba(req: Request, res: Response) {
         endpoint: '/activar-reporte-prueba',
         source: 'PUI',
         method: 'POST',
-        httpStatus: 200,
+        httpStatus: 201,
         matched: matchCount > 0,
         matchCount,
         curpHash,
@@ -166,7 +166,7 @@ export async function activarReportePrueba(req: Request, res: Response) {
     }
     console.info('[PUI] activar-reporte-prueba', { at: new Date().toISOString(), ip: req.ip, id: validated.id, companyId });
     if (res.headersSent) return;
-    return res.status(200).json({ message: ACTIVAR_REPORTE_PRUEBA_SUCCESS_MESSAGE });
+    return res.status(201).json({ message: ACTIVAR_REPORTE_PRUEBA_SUCCESS_MESSAGE });
   } catch (error) {
     if (env.MONGODB_URI) {
       await writeAuditLog({
@@ -209,7 +209,7 @@ export async function activarReporte(req: Request, res: Response) {
         endpoint: '/activar-reporte',
         source: 'PUI',
         method: 'POST',
-        httpStatus: 200,
+        httpStatus: 201,
         matched: matchCount > 0,
         matchCount,
         curpHash,
@@ -223,7 +223,7 @@ export async function activarReporte(req: Request, res: Response) {
       companyId
     });
     if (res.headersSent) return;
-    return res.status(200).json({ message: ACTIVAR_REPORTE_SUCCESS_MESSAGE });
+    return res.status(201).json({ message: ACTIVAR_REPORTE_SUCCESS_MESSAGE });
   } catch (error) {
     if (env.MONGODB_URI) {
       await writeAuditLog({
@@ -265,13 +265,13 @@ export async function desactivarReporte(req: Request, res: Response) {
         endpoint: '/desactivar-reporte',
         source: 'PUI',
         method: 'POST',
-        httpStatus: 200,
+        httpStatus: 201,
         durationMs: Date.now() - startedAt
       });
     }
     console.info('[PUI] desactivar-reporte', { at: new Date().toISOString(), ip: req.ip, id: validated.id, companyId });
     if (res.headersSent) return;
-    return res.status(200).json({ message: DESACTIVAR_REPORTE_SUCCESS_MESSAGE });
+    return res.status(201).json({ message: DESACTIVAR_REPORTE_SUCCESS_MESSAGE });
   } catch (error) {
     if (env.MONGODB_URI) {
       await writeAuditLog({

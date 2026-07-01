@@ -1,0 +1,44 @@
+{
+  "@types/express": {
+    "current": "4.17.25",
+    "wanted": "4.17.25",
+    "latest": "5.0.6",
+    "dependent": "server",
+    "location": "/Users/willdua/Desktop/PUI/PUI_1/server/node_modules/@types/express"
+  },
+  "@types/node": {
+    "current": "20.19.43",
+    "wanted": "20.19.43",
+    "latest": "26.0.1",
+    "dependent": "server",
+    "location": "/Users/willdua/Desktop/PUI/PUI_1/server/node_modules/@types/node"
+  },
+  "dotenv": {
+    "current": "16.6.1",
+    "wanted": "16.6.1",
+    "latest": "17.4.2",
+    "dependent": "server",
+    "location": "/Users/willdua/Desktop/PUI/PUI_1/server/node_modules/dotenv"
+  },
+  "express": {
+    "current": "4.22.2",
+    "wanted": "4.22.2",
+    "latest": "5.2.1",
+    "dependent": "server",
+    "location": "/Users/willdua/Desktop/PUI/PUI_1/server/node_modules/express"
+  },
+  "mongoose": {
+    "current": "8.24.1",
+    "wanted": "8.24.1",
+    "latest": "9.7.3",
+    "dependent": "server",
+    "location": "/Users/willdua/Desktop/PUI/PUI_1/server/node_modules/mongoose"
+  },
+  "typescript": {
+    "current": "5.9.3",
+    "wanted": "5.9.3",
+    "latest": "6.0.3",
+    "dependent": "server",
+    "location": "/Users/willdua/Desktop/PUI/PUI_1/server/node_modules/typescript"
+  }
+}
