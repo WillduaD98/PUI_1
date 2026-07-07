@@ -6,8 +6,8 @@ const cwdEnvPath = path.resolve(process.cwd(), '.env');
 const serverEnvPath = path.resolve(process.cwd(), 'server', '.env');
 
 const envPath = fs.existsSync(cwdEnvPath) ? cwdEnvPath : (fs.existsSync(serverEnvPath) ? serverEnvPath : null);
-if (envPath) dotenv.config({ path: envPath });
-else dotenv.config();
+if (envPath) dotenv.config({ path: envPath, quiet: true });
+else dotenv.config({ quiet: true });
 
 function reqEnv(name: string): string {
     const v = process.env[name];
